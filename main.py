@@ -188,6 +188,29 @@ def ask_question():
         logger.error(f"Gemini error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+#  thêm cau hỏi mới
+@swag_from({
+    'tags': ['QA'],
+    'parameters': [
+        {
+            "name": "body",
+            "in": "body",
+            "required": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "question": {"type": "string"},
+                    "answer": {"type": "string"}
+                }
+            }
+        }
+    ],
+    'responses': {
+        200: {"description": "Thêm câu hỏi thành công hoặc đã tồn tại"},
+        400: {"description": "Thiếu dữ liệu"}
+    }
+})
+
 @app.route("/add_qa", methods=["POST"])
 def add_qa():
     data = request.get_json()
@@ -204,6 +227,30 @@ def add_qa():
         "answer": data["answer"]
     })
     return jsonify({"message": "Đã thêm câu hỏi thành công"})
+#  update câu hỏi
+@swag_from({
+    'tags': ['QA'],
+    'parameters': [
+        {
+            "name": "body",
+            "in": "body",
+            "required": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "new_question": {"type": "string"},
+                    "new_answer": {"type": "string"}
+                }
+            }
+        }
+    ],
+    'responses': {
+        200: {"description": "Cập nhật thành công"},
+        400: {"description": "Thiếu ID hoặc không có gì để cập nhật"},
+        404: {"description": "Không tìm thấy ID"}
+    }
+})
 
 @app.route("/update_qa", methods=["PUT"])
 def update_qa():
@@ -231,6 +278,26 @@ def update_qa():
         return jsonify({"error": "Không tìm thấy ID"}), 404
 
     return jsonify({"message": "Cập nhật thành công"})
+
+# import câu hỏi từ file excel
+@swag_from({
+    'tags': ['QA'],
+    'consumes': ["multipart/form-data"],
+    'parameters': [
+        {
+            "name": "file",
+            "in": "formData",
+            "type": "file",
+            "required": True,
+            "description": "File Excel chứa cột 'question' và 'answer' (hoặc 'câu hỏi' và 'trả lời')"
+        }
+    ],
+    'responses': {
+        200: {"description": "Import thành công"},
+        400: {"description": "Lỗi định dạng file hoặc thiếu cột"},
+        500: {"description": "Lỗi hệ thống khi xử lý"}
+    }
+})
 
 @app.route("/import_qa", methods=["POST"])
 def import_qa():
