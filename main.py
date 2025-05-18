@@ -19,7 +19,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # ======== MongoDB ========
-mongo_client = MongoClient("mongodb+srv://nguyenhautq2k4:aSIAzthfbxdSjI9k@dbmess.quy0clt.mongodb.net/?retryWrites=true&w=majority&tls=true")
+mongo_client = MongoClient("mongodb+srv://nguyenhautq2k4:aSIAzthfbxdSjI9k@dbmess.quy0clt.mongodb.net/?retryWrites=true&w=majority&tls=true&tlsAllowInvalidCertificates=true")
+
 
 
 db = mongo_client["qa_database"]
