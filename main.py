@@ -41,7 +41,20 @@ def load_config():
         db["config"].insert_one({"_id": "default", **default_config})
         return default_config
 
-config = load_config()
+try:
+    config = load_config()
+    VERIFY_TOKEN = config["verify_token"]
+    PAGE_ACCESS_TOKEN = config["page_access_token"]
+    GENAI_API_KEY = config["genai_api_key"]
+    genai_client = genai.Client(api_key=GENAI_API_KEY) if GENAI_API_KEY else None
+except Exception as e:
+    logger.error("❌ Không thể kết nối MongoDB hoặc load config:", exc_info=e)
+    config = {}
+    VERIFY_TOKEN = "invalid"
+    PAGE_ACCESS_TOKEN = ""
+    GENAI_API_KEY = ""
+    genai_client = None
+
 VERIFY_TOKEN = config["verify_token"]
 PAGE_ACCESS_TOKEN = config["page_access_token"]
 GENAI_API_KEY = config["genai_api_key"]
