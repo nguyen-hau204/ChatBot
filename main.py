@@ -79,7 +79,7 @@ def get_bot_response(question):
     if not genai_client:
         return "Lỗi: Chưa cấu hình API key cho Gemini. Vui lòng vào /config để cập nhật."
     try:
-        response = requests.post("http://localhost:5000/ask", json={"question": question}, timeout=20)
+        response = requests.post("https://chatbot-production-82da.up.railway.app/ask", json={"question": question}, timeout=20)
         if response.status_code != 200:
             return f"Lỗi hệ thống: /ask trả về {response.status_code}"
         return response.json().get("answer", "Xin lỗi, tôi không hiểu.")
