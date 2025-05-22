@@ -76,7 +76,45 @@ def token_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# ======== Auth Routes ========
+
+# ======== Messenger Webhook ========
+@app.route("/webhook", methods=["GET", "POST"])
+def messenger_webhook():
+    config = db["config"].find_one({"_id": "default"})
+    VERIFY_TOKEN = config.get("verify_token") if config else ""
+
+    if request.method == "GET":
+        token = request.args.get("hub.verify_token")
+        challenge = request.args.get("hub.challenge")
+        mode = request.args.get("hub.mode")
+        if mode == "subscribe" and token == VERIFY_TOKEN:
+            return challenge, 200
+        else:
+            return "Verification token mismatch", 403
+
+    if request.method == "POST":
+        try:
+            data = request.get_json(force=True)
+            logger.info("Dữ liệu POST nhận từ Facebook: %s", data)
+
+            for entry in data.get("entry", []):
+                for messaging_event in entry.get("messaging", []):
+                    sender_id = messaging_event.get("sender", {}).get("id")
+                    message_text = messaging_event.get("message", {}).get("text")
+
+                    if sender_id and message_text:
+                        # Trả lời tạm thời
+                        response = {
+                            "recipient": {"id": sender_id},
+                            "message": {"text": f"Bạn vừa gửi: {message_text}"}
+                        }
+                        logger.info("Đáp lại: %s", response)
+
+            return "ok", 200
+
+        except Exception as e:
+            logger.error("Lỗi xử lý webhook: %s", str(e))
+            return "Internal Server Error", 500
 
 # ======== Auth Routes ========
 @app.route("/register", methods=["POST"])
