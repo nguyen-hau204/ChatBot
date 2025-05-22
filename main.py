@@ -82,6 +82,30 @@ def token_required(f):
 def messenger_webhook():
     config = db["config"].find_one({"_id": "default"})
     VERIFY_TOKEN = config.get("verify_token") if config else ""
+    PAGE_ACCESS_TOKEN = config.get("page_access_token") if config else ""
+
+    def normalize_question(text):
+        import re
+        text = text.strip().lower()
+        text = re.sub(r'\s+', ' ', text)
+        text = re.sub(r'\s+\?', '?', text)
+        return text
+
+    def send_message(recipient_id, message_text):
+        payload = {
+            "recipient": {"id": recipient_id},
+            "message": {"text": message_text}
+        }
+        headers = {"Content-Type": "application/json"}
+        params = {"access_token": PAGE_ACCESS_TOKEN}
+
+        res = requests.post(
+            "https://graph.facebook.com/v18.0/me/messages",
+            headers=headers,
+            params=params,
+            json=payload
+        )
+        logger.info("Gửi tin nhắn tới Facebook [%s]: %s", res.status_code, res.text)
 
     if request.method == "GET":
         token = request.args.get("hub.verify_token")
@@ -103,19 +127,16 @@ def messenger_webhook():
                     message_text = messaging_event.get("message", {}).get("text")
 
                     if sender_id and message_text:
-                        # Trả lời tạm thời
-                        response = {
-                            "recipient": {"id": sender_id},
-                            "message": {"text": f"Bạn vừa gửi: {message_text}"}
-                        }
-                        logger.info("Đáp lại: %s", response)
+                        normalized = normalize_question(message_text)
+                        qa = db["custom_qa"].find_one({"normalized_question": normalized})
+                        answer = qa["answer"] if qa else "Xin lỗi, tôi không có câu trả lời cho câu hỏi này."
+                        send_message(sender_id, answer)
 
             return "ok", 200
 
         except Exception as e:
             logger.error("Lỗi xử lý webhook: %s", str(e))
             return "Internal Server Error", 500
-
 # ======== Auth Routes ========
 @app.route("/register", methods=["POST"])
 @swag_from({
